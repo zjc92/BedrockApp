@@ -9,13 +9,24 @@
         <name>CustomObject</name>
     </types>
     <types>
-        <members>ComplaintService</members>
-        <members>ComplaintServiceTest</members>
-        <name>ApexClass</name>
+        <members>Customer_Complaint__c</members>
+        <name>CustomTab</name>
+    </types>
+    <types>
+        <members>Bedrock_Complaint_Manager_UtilityBar</members>
+        <name>FlexiPage</name>
     </types>
     <types>
         <members>Bedrock_Create_New_Task</members>
         <name>Flow</name>
+    </types>
+    <types>
+        <members>ComplaintService</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>ComplaintServiceTest</members>
+        <name>ApexClass</name>
     </types>
     <types>
         <members>Bedrock_Complaint_Manager</members>
