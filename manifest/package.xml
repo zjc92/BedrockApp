@@ -36,5 +36,9 @@
         <members>Bedrock Service Team</members>
         <name>Profile</name>
     </types>
+    <types>
+    <members>Customer_Complaint__c-Customer Complaint Layout</members>
+    <name>Layout</name>
+</types>
     <version>61.0</version>
 </Package>
