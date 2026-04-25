@@ -40,6 +40,7 @@
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>Customer_Complaint__c</object>
+    
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
     <tabSettings>
