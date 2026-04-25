@@ -45,6 +45,9 @@
         <field>Customer_Complaint__c.Status__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <layoutAssignments>
+        <layout>Customer_Complaint__c-Customer Complaint Layout</layout>
+    </layoutAssignments>
     <loginIpRanges>
         <description>ALL</description>
         <endAddress>255.255.255.255</endAddress>
