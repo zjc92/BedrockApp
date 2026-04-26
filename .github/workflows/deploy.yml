@@ -1,0 +1,36 @@
+name: Deploy to BedrockTarget
+
+# Trigger: This workflow runs automatically when code is pushed or merged into the main branch
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Fetch the source code from the GitHub repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Install the latest Salesforce CLI on the virtual runner
+      - name: Install Salesforce CLI
+        run: npm install -g @salesforce/cli
+
+      # Step 3: Authenticate with the Target Org using the stored Secret
+      # The SFDX_AUTH_URL is retrieved from GitHub Secrets for a secure login
+      - name: Authenticate with Salesforce
+        run: |
+          echo "${{ secrets.SFDX_AUTH_URL }}" > auth_url.txt
+          sf org login sfdx-url --sfdx-url-file auth_url.txt --set-default --alias targetOrg
+          rm auth_url.txt
+
+      # Step 4: Execute the deployment to the target environment
+      # This deploys components listed in package.xml and runs the specified Apex tests
+      - name: Deploy Metadata
+        run: |
+          sf project deploy start \
+            --manifest manifest/package.xml \
+            --target-org targetOrg \
+            --test-level RunSpecifiedTests \
+            --tests ComplaintServiceTest
