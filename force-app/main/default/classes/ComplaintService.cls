@@ -17,3 +17,5 @@ public with sharing class ComplaintService {
         }
     }
 }
+
+// Updated to verify CI/CD coverage report
