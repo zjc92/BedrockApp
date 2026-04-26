@@ -25,12 +25,13 @@ jobs:
           sf org login sfdx-url --sfdx-url-file auth_url.txt --set-default --alias targetOrg
           rm auth_url.txt
 
-      # Step 4: Execute the deployment to the target environment
-      # This deploys components listed in package.xml and runs the specified Apex tests
+  # Step 4: Execute deployment and generate coverage report
       - name: Deploy Metadata
         run: |
           sf project deploy start \
             --manifest manifest/package.xml \
             --target-org targetOrg \
             --test-level RunSpecifiedTests \
-            --tests ComplaintServiceTest
+            --tests ComplaintServiceTest \
+            --coverage-formatters text-summary \
+            --results-dir ./tests/results
