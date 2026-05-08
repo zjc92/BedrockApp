@@ -41,6 +41,11 @@
                 <default>false</default>
                 <label>Closed</label>
             </value>
+            <value>
+                <fullName>Pending</fullName>
+                <default>false</default>
+                <label>Pending</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>
