@@ -161,10 +161,7 @@ public with sharing class IndirectAccountViewerController {
                 node.contactId = acr.ContactId;
                 node.contactName = (acr.Contact.FirstName ?? '') + ' ' + acr.Contact.LastName;
                 node.contactName = node.contactName.trim();
-                // Use the role from the current account's ACR for context
-                ContactNodeDTO directNode = directContactByContactId.get(acr.ContactId);
-                node.role = (directNode != null && String.isNotBlank(directNode.role))
-                    ? directNode.role : (String.isNotBlank(acr.Roles) ? acr.Roles : '');
+                node.role = String.isNotBlank(acr.Roles) ? acr.Roles : '';
                 sharedContactsByAccountId.get(acr.AccountId).add(node);
             }
 
