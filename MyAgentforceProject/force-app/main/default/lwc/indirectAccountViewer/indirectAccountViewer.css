@@ -1,0 +1,28 @@
+.branch-contact {
+    padding-left: 1.5rem;
+    border-left: 2px solid #dddbda;
+    margin-left: 0.75rem;
+}
+
+.branch-line {
+    display: flex;
+    align-items: center;
+}
+
+.role-badge {
+    font-size: 0.7rem;
+    background-color: #f3f3f3;
+    color: #444;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    padding: 0 0.4rem;
+    line-height: 1.4;
+}
+
+.indirect-account-card {
+    border-left: 3px solid #0176d3;
+}
+
+.account-meta {
+    padding-left: 0.25rem;
+}

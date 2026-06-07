@@ -1,32 +1,29 @@
 /**
  * Test class for IndirectAccountViewerController.
- * Covers: happy path, empty results, null recordId, sorting, and record limit.
+ * Covers getIndirectAccounts (flat list) and getRelationshipTree (hierarchical).
  */
 @IsTest
 private class IndirectAccountViewerControllerTest {
 
     @TestSetup
     static void setupTestData() {
-        // Primary account (the "current" record page account)
         Account primaryAccount = new Account(Name = 'Primary Account');
         insert primaryAccount;
 
-        // Two indirect accounts sharing contacts with the primary
         List<Account> relatedAccounts = new List<Account>{
             new Account(Name = 'Alpha Related', Industry = 'Technology', AnnualRevenue = 500000),
             new Account(Name = 'Beta Related', Industry = 'Finance', AnnualRevenue = 750000)
         };
         insert relatedAccounts;
 
-        // Contacts linked to the primary account
         List<Contact> contacts = new List<Contact>{
-            new Contact(LastName = 'Contact One', AccountId = primaryAccount.Id),
-            new Contact(LastName = 'Contact Two', AccountId = primaryAccount.Id),
+            new Contact(LastName = 'Contact One',   AccountId = primaryAccount.Id),
+            new Contact(LastName = 'Contact Two',   AccountId = primaryAccount.Id),
             new Contact(LastName = 'Contact Three', AccountId = primaryAccount.Id)
         };
         insert contacts;
 
-        // Link Contact One and Two to Alpha Related (indirect)
+        // Contact One and Two are shared with Alpha Related
         insert new List<AccountContactRelation>{
             new AccountContactRelation(
                 AccountId = relatedAccounts[0].Id,
@@ -40,7 +37,7 @@ private class IndirectAccountViewerControllerTest {
             )
         };
 
-        // Link Contact Three to Beta Related (indirect)
+        // Contact Three is shared with Beta Related
         insert new AccountContactRelation(
             AccountId = relatedAccounts[1].Id,
             ContactId = contacts[2].Id,
@@ -48,12 +45,14 @@ private class IndirectAccountViewerControllerTest {
         );
     }
 
+    // =========================================================================
+    // getIndirectAccounts — flat list tests (backwards compatibility)
+    // =========================================================================
+
     @IsTest
     static void shouldReturnIndirectAccounts_WhenValidRecordId() {
-        // Given
         Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -61,7 +60,6 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then
         Assert.areEqual(2, results.size(), 'Should return 2 indirect accounts');
         Assert.areEqual('Alpha Related', results[0].accountName,
             'First result should be Alpha Related (ASC sort by Name)');
@@ -71,10 +69,8 @@ private class IndirectAccountViewerControllerTest {
 
     @IsTest
     static void shouldReturnSharedContactCount_WhenRelationsExist() {
-        // Given
         Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -82,15 +78,14 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then
         IndirectAccountViewerController.IndirectAccountDTO alphaDto =
-            getByName(results, 'Alpha Related');
+            getFlatByName(results, 'Alpha Related');
         Assert.isNotNull(alphaDto, 'Alpha Related DTO should be present');
         Assert.areEqual(2, alphaDto.sharedContactCount,
             'Alpha Related should have 2 shared contacts');
 
         IndirectAccountViewerController.IndirectAccountDTO betaDto =
-            getByName(results, 'Beta Related');
+            getFlatByName(results, 'Beta Related');
         Assert.isNotNull(betaDto, 'Beta Related DTO should be present');
         Assert.areEqual(1, betaDto.sharedContactCount,
             'Beta Related should have 1 shared contact');
@@ -98,10 +93,8 @@ private class IndirectAccountViewerControllerTest {
 
     @IsTest
     static void shouldRespectRecordLimit_WhenLimitIsOne() {
-        // Given
         Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -109,16 +102,13 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then
         Assert.areEqual(1, results.size(), 'Record limit of 1 should return exactly 1 result');
     }
 
     @IsTest
     static void shouldSortDescending_WhenSortDirectionIsDesc() {
-        // Given
         Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -126,7 +116,6 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then
         Assert.areEqual(2, results.size(), 'Should return 2 results');
         Assert.areEqual('Beta Related', results[0].accountName,
             'First result should be Beta Related (DESC sort by Name)');
@@ -136,10 +125,8 @@ private class IndirectAccountViewerControllerTest {
 
     @IsTest
     static void shouldSortByRelationshipCount_WhenSortByIsRelationshipCount() {
-        // Given
         Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -147,7 +134,6 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then
         Assert.areEqual(2, results.size(), 'Should return 2 results');
         Assert.isTrue(
             results[0].relationshipCount >= results[1].relationshipCount,
@@ -157,11 +143,9 @@ private class IndirectAccountViewerControllerTest {
 
     @IsTest
     static void shouldReturnEmpty_WhenAccountHasNoContacts() {
-        // Given
         Account isolatedAccount = new Account(Name = 'Isolated Account');
         insert isolatedAccount;
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -169,14 +153,12 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then
         Assert.areEqual(0, results.size(),
             'Account with no contacts should return empty list');
     }
 
     @IsTest
     static void shouldThrowAuraHandledException_WhenRecordIdIsNull() {
-        // When / Then
         Test.startTest();
         try {
             IndirectAccountViewerController.getIndirectAccounts(null, 10, 'Name', 'ASC');
@@ -193,10 +175,8 @@ private class IndirectAccountViewerControllerTest {
 
     @IsTest
     static void shouldDefaultToTenRecords_WhenLimitIsNull() {
-        // Given
         Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -204,16 +184,13 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then
         Assert.isTrue(results.size() <= 10, 'Null limit should default to 10');
     }
 
     @IsTest
     static void shouldExcludePersonAccounts_WhenPersonAccountsAreEnabled() {
-        // Given — only business accounts exist in @TestSetup; verify none are Person Accounts
         Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
 
-        // When
         Test.startTest();
         List<IndirectAccountViewerController.IndirectAccountDTO> results =
             IndirectAccountViewerController.getIndirectAccounts(
@@ -221,7 +198,6 @@ private class IndirectAccountViewerControllerTest {
             );
         Test.stopTest();
 
-        // Then — all returned accounts must be business accounts (IsPersonAccount = false)
         Set<Id> returnedIds = new Set<Id>();
         for (IndirectAccountViewerController.IndirectAccountDTO dto : results) {
             returnedIds.add(dto.accountId);
@@ -243,15 +219,256 @@ private class IndirectAccountViewerControllerTest {
             'Both business accounts should still be returned');
     }
 
-    // Helper: find a DTO by account name
-    private static IndirectAccountViewerController.IndirectAccountDTO getByName(
+    // =========================================================================
+    // getRelationshipTree — hierarchical tree tests
+    // =========================================================================
+
+    @IsTest
+    static void tree_shouldReturnRootAccountName() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.areEqual('Primary Account', tree.rootAccountName,
+            'Root account name should match the queried account');
+    }
+
+    @IsTest
+    static void tree_shouldReturnDirectContacts() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.isNotNull(tree.directContacts, 'Direct contacts list should not be null');
+        Assert.areEqual(3, tree.directContacts.size(),
+            'Should return 3 direct contacts (Contact One, Two, Three)');
+    }
+
+    @IsTest
+    static void tree_shouldReturnDirectContactNames() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Set<String> contactNames = new Set<String>();
+        for (IndirectAccountViewerController.ContactNodeDTO node : tree.directContacts) {
+            contactNames.add(node.contactName);
+        }
+        Assert.isTrue(contactNames.contains('Contact One'),   'Contact One should be present');
+        Assert.isTrue(contactNames.contains('Contact Two'),   'Contact Two should be present');
+        Assert.isTrue(contactNames.contains('Contact Three'), 'Contact Three should be present');
+    }
+
+    @IsTest
+    static void tree_shouldReturnIndirectAccounts() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.isNotNull(tree.indirectAccounts, 'Indirect accounts list should not be null');
+        Assert.areEqual(2, tree.indirectAccounts.size(),
+            'Should return 2 indirect accounts');
+    }
+
+    @IsTest
+    static void tree_shouldReturnSharedContactsPerIndirectAccount() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        IndirectAccountViewerController.IndirectAccountNodeDTO alphaNode =
+            getNodeByName(tree.indirectAccounts, 'Alpha Related');
+        Assert.isNotNull(alphaNode, 'Alpha Related node should be present');
+        Assert.areEqual(2, alphaNode.sharedContactCount,
+            'Alpha Related should have 2 shared contacts');
+        Assert.isNotNull(alphaNode.sharedContacts, 'Shared contacts list should not be null');
+        Assert.areEqual(2, alphaNode.sharedContacts.size(),
+            'Alpha Related should have 2 shared contact nodes');
+
+        IndirectAccountViewerController.IndirectAccountNodeDTO betaNode =
+            getNodeByName(tree.indirectAccounts, 'Beta Related');
+        Assert.isNotNull(betaNode, 'Beta Related node should be present');
+        Assert.areEqual(1, betaNode.sharedContactCount,
+            'Beta Related should have 1 shared contact');
+        Assert.areEqual(1, betaNode.sharedContacts.size(),
+            'Beta Related should have 1 shared contact node');
+    }
+
+    @IsTest
+    static void tree_shouldSortIndirectAccountsByNameAsc() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.areEqual('Alpha Related', tree.indirectAccounts[0].accountName,
+            'Alpha Related should come first in ASC order');
+        Assert.areEqual('Beta Related', tree.indirectAccounts[1].accountName,
+            'Beta Related should come second in ASC order');
+    }
+
+    @IsTest
+    static void tree_shouldSortIndirectAccountsByNameDesc() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'DESC'
+            );
+        Test.stopTest();
+
+        Assert.areEqual('Beta Related', tree.indirectAccounts[0].accountName,
+            'Beta Related should come first in DESC order');
+        Assert.areEqual('Alpha Related', tree.indirectAccounts[1].accountName,
+            'Alpha Related should come second in DESC order');
+    }
+
+    @IsTest
+    static void tree_shouldRespectRecordLimit() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 1, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.areEqual(1, tree.indirectAccounts.size(),
+            'Record limit of 1 should return exactly 1 indirect account');
+    }
+
+    @IsTest
+    static void tree_shouldReturnEmptyIndirectAccounts_WhenNoSharedContacts() {
+        Account isolatedAccount = new Account(Name = 'Isolated Account');
+        insert isolatedAccount;
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                isolatedAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.areEqual(0, tree.directContacts.size(),
+            'Isolated account should have no direct contacts');
+        Assert.areEqual(0, tree.indirectAccounts.size(),
+            'Isolated account should have no indirect accounts');
+    }
+
+    @IsTest
+    static void tree_shouldThrowAuraHandledException_WhenRecordIdIsNull() {
+        Test.startTest();
+        try {
+            IndirectAccountViewerController.getRelationshipTree(null, 10, 'Name', 'ASC');
+            Assert.fail('Expected AuraHandledException for null recordId');
+        } catch (AuraHandledException e) {
+            Assert.isTrue(
+                e.getMessage().contains('Record Id is required') ||
+                e.getMessage().contains('Script-thrown exception'),
+                'Exception message should indicate required recordId'
+            );
+        }
+        Test.stopTest();
+    }
+
+    @IsTest
+    static void tree_shouldDefaultToTenRecords_WhenLimitIsNull() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, null, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.isTrue(tree.indirectAccounts.size() <= 10,
+            'Null limit should default to 10');
+    }
+
+    @IsTest
+    static void tree_shouldExcludePersonAccounts() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        Set<Id> returnedIds = new Set<Id>();
+        for (IndirectAccountViewerController.IndirectAccountNodeDTO node : tree.indirectAccounts) {
+            returnedIds.add(node.accountId);
+        }
+
+        if (!returnedIds.isEmpty()) {
+            List<Account> returned = [
+                SELECT Id, IsPersonAccount
+                FROM Account
+                WHERE Id IN :returnedIds
+            ];
+            for (Account acc : returned) {
+                Assert.isFalse(acc.IsPersonAccount,
+                    'Returned account ' + acc.Id + ' must not be a Person Account');
+            }
+        }
+
+        Assert.areEqual(2, tree.indirectAccounts.size(),
+            'Both business accounts should be in the tree');
+    }
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+
+    private static IndirectAccountViewerController.IndirectAccountDTO getFlatByName(
         List<IndirectAccountViewerController.IndirectAccountDTO> dtos,
         String name
     ) {
         for (IndirectAccountViewerController.IndirectAccountDTO dto : dtos) {
-            if (dto.accountName == name) {
-                return dto;
-            }
+            if (dto.accountName == name) return dto;
+        }
+        return null;
+    }
+
+    private static IndirectAccountViewerController.IndirectAccountNodeDTO getNodeByName(
+        List<IndirectAccountViewerController.IndirectAccountNodeDTO> nodes,
+        String name
+    ) {
+        for (IndirectAccountViewerController.IndirectAccountNodeDTO node : nodes) {
+            if (node.accountName == name) return node;
         }
         return null;
     }

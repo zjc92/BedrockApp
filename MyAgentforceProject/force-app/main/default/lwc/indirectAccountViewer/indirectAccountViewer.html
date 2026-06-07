@@ -2,7 +2,7 @@
     <lightning-card title="Indirect Account Relationships" icon-name="standard:account">
         <div class="slds-m-around_medium">
 
-            <!-- Loading state -->
+            <!-- Loading -->
             <template lwc:if={isLoading}>
                 <lightning-spinner
                     alternative-text="Loading indirect account relationships"
@@ -10,7 +10,7 @@
                 </lightning-spinner>
             </template>
 
-            <!-- Error state -->
+            <!-- Error -->
             <template lwc:if={hasError}>
                 <div class="slds-notify slds-notify_alert slds-theme_error" role="alert">
                     <span class="slds-assistive-text">Error</span>
@@ -18,17 +18,130 @@
                 </div>
             </template>
 
-            <!-- Data table -->
+            <!-- Tree view -->
             <template lwc:if={hasData}>
-                <lightning-datatable
-                    key-field="accountId"
-                    data={accounts}
-                    columns={columns}
-                    sorted-by={currentSortBy}
-                    sorted-direction={currentSortDirection}
-                    onsort={handleSort}
-                    hide-checkbox-column>
-                </lightning-datatable>
+
+                <!-- Section 1: Current Account → Direct Contacts -->
+                <div class="slds-m-bottom_medium">
+                    <h2 class="slds-text-heading_small slds-m-bottom_small">
+                        Direct Contacts
+                    </h2>
+
+                    <!-- Root: current account -->
+                    <div class="slds-media slds-media_center slds-m-bottom_x-small">
+                        <div class="slds-media__figure">
+                            <lightning-icon
+                                icon-name="standard:account"
+                                size="small"
+                                alternative-text="Account">
+                            </lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <span class="slds-text-body_regular slds-text-color_default">
+                                <strong>{rootAccountName}</strong>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Direct contact branches -->
+                    <template for:each={directContacts} for:item="contact">
+                        <div key={contact.contactId} class="slds-media slds-media_center branch-contact slds-m-bottom_xx-small">
+                            <div class="slds-media__figure branch-line">
+                                <lightning-icon
+                                    icon-name="standard:contact"
+                                    size="x-small"
+                                    alternative-text="Contact">
+                                </lightning-icon>
+                            </div>
+                            <div class="slds-media__body">
+                                <span class="slds-text-body_small">{contact.contactName}</span>
+                                <template lwc:if={contact.role}>
+                                    <span class="slds-badge slds-m-left_x-small role-badge">
+                                        {contact.role}
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Divider -->
+                <hr class="slds-m-vertical_medium" />
+
+                <!-- Section 2: Indirect Accounts via Shared Contacts -->
+                <div>
+                    <h2 class="slds-text-heading_small slds-m-bottom_small">
+                        Indirect Accounts via Shared Contacts
+                    </h2>
+
+                    <template for:each={indirectAccounts} for:item="account">
+                        <div key={account.accountId} class="slds-box slds-box_x-small slds-m-bottom_small indirect-account-card">
+
+                            <!-- Account header -->
+                            <div class="slds-media slds-media_center slds-m-bottom_x-small">
+                                <div class="slds-media__figure">
+                                    <lightning-icon
+                                        icon-name="standard:account"
+                                        size="small"
+                                        alternative-text="Indirect Account">
+                                    </lightning-icon>
+                                </div>
+                                <div class="slds-media__body">
+                                    <span class="slds-text-body_regular">
+                                        <strong>{account.accountName}</strong>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Account metadata -->
+                            <div class="slds-grid slds-wrap slds-m-bottom_x-small account-meta">
+                                <template lwc:if={account.industry}>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <span class="slds-text-color_weak slds-text-body_small">Industry: </span>
+                                        <span class="slds-text-body_small">{account.industry}</span>
+                                    </div>
+                                </template>
+                                <template lwc:if={account.lifetimeValue}>
+                                    <div class="slds-col slds-size_1-of-2">
+                                        <span class="slds-text-color_weak slds-text-body_small">Annual Revenue: </span>
+                                        <span class="slds-text-body_small">{account.formattedRevenue}</span>
+                                    </div>
+                                </template>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <span class="slds-text-color_weak slds-text-body_small">Shared Contacts: </span>
+                                    <span class="slds-text-body_small">{account.sharedContactCount}</span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <span class="slds-text-color_weak slds-text-body_small">Total Relationships: </span>
+                                    <span class="slds-text-body_small">{account.relationshipCount}</span>
+                                </div>
+                            </div>
+
+                            <!-- Shared contact branches -->
+                            <template for:each={account.sharedContacts} for:item="shared">
+                                <div key={shared.contactId} class="slds-media slds-media_center branch-contact slds-m-bottom_xx-small">
+                                    <div class="slds-media__figure branch-line">
+                                        <lightning-icon
+                                            icon-name="standard:contact"
+                                            size="x-small"
+                                            alternative-text="Shared Contact">
+                                        </lightning-icon>
+                                    </div>
+                                    <div class="slds-media__body">
+                                        <span class="slds-text-body_small">{shared.contactName}</span>
+                                        <template lwc:if={shared.role}>
+                                            <span class="slds-badge slds-m-left_x-small role-badge">
+                                                {shared.role}
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                        </div>
+                    </template>
+                </div>
+
             </template>
 
             <!-- Empty state -->

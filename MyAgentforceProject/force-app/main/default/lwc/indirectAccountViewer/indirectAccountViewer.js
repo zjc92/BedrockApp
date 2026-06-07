@@ -1,19 +1,12 @@
-import { LightningElement, api, wire } from 'lwc';
-import getIndirectAccounts from '@salesforce/apex/IndirectAccountViewerController.getIndirectAccounts';
+import { LightningElement, api } from 'lwc';
+import getRelationshipTree from '@salesforce/apex/IndirectAccountViewerController.getRelationshipTree';
 
-const COLUMNS = [
-    { label: 'Account Name', fieldName: 'accountName', type: 'text', sortable: true },
-    { label: 'Industry', fieldName: 'industry', type: 'text', sortable: true },
-    { label: 'Shared Contacts', fieldName: 'sharedContactCount', type: 'number', sortable: true },
-    {
-        label: 'Lifetime Value',
-        fieldName: 'lifetimeValue',
-        type: 'currency',
-        sortable: true,
-        typeAttributes: { currencyCode: 'USD', minimumFractionDigits: 0 }
-    },
-    { label: 'Relationship Count', fieldName: 'relationshipCount', type: 'number', sortable: true }
-];
+const USD_FORMATTER = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+});
 
 export default class IndirectAccountViewer extends LightningElement {
     @api recordId;
@@ -21,18 +14,13 @@ export default class IndirectAccountViewer extends LightningElement {
     @api sortBy = 'Name';
     @api sortDirection = 'ASC';
 
-    accounts = [];
+    rootAccountName;
+    directContacts = [];
+    indirectAccounts = [];
     errorMessage;
     isLoading = false;
 
-    currentSortBy = 'Name';
-    currentSortDirection = 'ASC';
-
-    columns = COLUMNS;
-
     connectedCallback() {
-        this.currentSortBy = this.sortBy;
-        this.currentSortDirection = this.sortDirection;
         this._loadData();
     }
 
@@ -41,37 +29,41 @@ export default class IndirectAccountViewer extends LightningElement {
         this.isLoading = true;
         this.errorMessage = undefined;
 
-        getIndirectAccounts({
+        getRelationshipTree({
             recordId: this.recordId,
             recordLimit: this.recordLimit,
-            sortBy: this.currentSortBy,
-            sortDirection: this.currentSortDirection
+            sortBy: this.sortBy,
+            sortDirection: this.sortDirection
         })
-            .then(data => {
-                this.accounts = data;
+            .then(tree => {
+                this.rootAccountName = tree.rootAccountName;
+                this.directContacts = tree.directContacts ?? [];
+                this.indirectAccounts = (tree.indirectAccounts ?? []).map(acc => ({
+                    ...acc,
+                    formattedRevenue: acc.lifetimeValue != null
+                        ? USD_FORMATTER.format(acc.lifetimeValue)
+                        : null
+                }));
             })
             .catch(error => {
                 this.errorMessage =
                     error?.body?.message ?? error?.message ?? 'An unexpected error occurred.';
-                this.accounts = [];
+                this.directContacts = [];
+                this.indirectAccounts = [];
             })
             .finally(() => {
                 this.isLoading = false;
             });
     }
 
-    handleSort(event) {
-        this.currentSortBy = event.detail.fieldName;
-        this.currentSortDirection = event.detail.sortDirection.toUpperCase();
-        this._loadData();
-    }
-
     get hasData() {
-        return !this.isLoading && !this.hasError && this.accounts.length > 0;
+        return !this.isLoading && !this.hasError &&
+            (this.directContacts.length > 0 || this.indirectAccounts.length > 0);
     }
 
     get isEmpty() {
-        return !this.isLoading && !this.hasError && this.accounts.length === 0;
+        return !this.isLoading && !this.hasError &&
+            this.directContacts.length === 0 && this.indirectAccounts.length === 0;
     }
 
     get hasError() {
