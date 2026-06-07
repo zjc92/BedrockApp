@@ -1,0 +1,45 @@
+<template>
+    <lightning-card title="Indirect Account Relationships" icon-name="standard:account">
+        <div class="slds-m-around_medium">
+
+            <!-- Loading state -->
+            <template lwc:if={isLoading}>
+                <lightning-spinner
+                    alternative-text="Loading indirect account relationships"
+                    size="medium">
+                </lightning-spinner>
+            </template>
+
+            <!-- Error state -->
+            <template lwc:if={hasError}>
+                <div class="slds-notify slds-notify_alert slds-theme_error" role="alert">
+                    <span class="slds-assistive-text">Error</span>
+                    <p>{errorMessage}</p>
+                </div>
+            </template>
+
+            <!-- Data table -->
+            <template lwc:if={hasData}>
+                <lightning-datatable
+                    key-field="accountId"
+                    data={accounts}
+                    columns={columns}
+                    sorted-by={currentSortBy}
+                    sorted-direction={currentSortDirection}
+                    onsort={handleSort}
+                    hide-checkbox-column>
+                </lightning-datatable>
+            </template>
+
+            <!-- Empty state -->
+            <template lwc:if={isEmpty}>
+                <div class="slds-box slds-text-align_center slds-theme_shade">
+                    <p class="slds-text-color_weak">
+                        No indirect account relationships found for this record.
+                    </p>
+                </div>
+            </template>
+
+        </div>
+    </lightning-card>
+</template>

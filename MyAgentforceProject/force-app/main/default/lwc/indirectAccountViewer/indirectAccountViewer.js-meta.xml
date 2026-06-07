@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Indirect Account Viewer</masterLabel>
+    <description>Displays indirect Account relationships via AccountContactRelation on Account Record Pages.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Account</object>
+            </objects>
+            <property name="recordLimit" type="Integer" label="Record Limit" default="10" min="1" max="100" />
+            <property name="sortBy" type="String" label="Sort By" datasource="Name,RelationshipCount" default="Name" />
+            <property name="sortDirection" type="String" label="Sort Direction" datasource="ASC,DESC" default="ASC" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
