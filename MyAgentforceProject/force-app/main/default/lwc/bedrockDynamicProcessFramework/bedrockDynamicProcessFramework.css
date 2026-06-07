@@ -1,0 +1,8 @@
+.slds-path__item.slds-is-current .slds-path__link {
+    color: var(--slds-g-color-neutral-base-100, #fff);
+}
+
+.action-type-badge {
+    --sds-c-badge-color-background: var(--slds-g-color-brand-base-60, #0176d3);
+    --sds-c-badge-text-color: var(--slds-g-color-neutral-base-100, #fff);
+}
