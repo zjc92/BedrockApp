@@ -208,6 +208,41 @@ private class IndirectAccountViewerControllerTest {
         Assert.isTrue(results.size() <= 10, 'Null limit should default to 10');
     }
 
+    @IsTest
+    static void shouldExcludePersonAccounts_WhenPersonAccountsAreEnabled() {
+        // Given — only business accounts exist in @TestSetup; verify none are Person Accounts
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        // When
+        Test.startTest();
+        List<IndirectAccountViewerController.IndirectAccountDTO> results =
+            IndirectAccountViewerController.getIndirectAccounts(
+                primaryAccount.Id, 10, 'Name', 'ASC'
+            );
+        Test.stopTest();
+
+        // Then — all returned accounts must be business accounts (IsPersonAccount = false)
+        Set<Id> returnedIds = new Set<Id>();
+        for (IndirectAccountViewerController.IndirectAccountDTO dto : results) {
+            returnedIds.add(dto.accountId);
+        }
+
+        if (!returnedIds.isEmpty()) {
+            List<Account> returned = [
+                SELECT Id, IsPersonAccount
+                FROM Account
+                WHERE Id IN :returnedIds
+            ];
+            for (Account acc : returned) {
+                Assert.isFalse(acc.IsPersonAccount,
+                    'Returned account ' + acc.Id + ' must not be a Person Account');
+            }
+        }
+
+        Assert.areEqual(2, results.size(),
+            'Both business accounts should still be returned');
+    }
+
     // Helper: find a DTO by account name
     private static IndirectAccountViewerController.IndirectAccountDTO getByName(
         List<IndirectAccountViewerController.IndirectAccountDTO> dtos,

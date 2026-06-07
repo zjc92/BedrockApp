@@ -72,13 +72,24 @@ public with sharing class IndirectAccountViewerController {
                 contactCountByAccountId.put(accountId, (Integer) ar.get('contactCount'));
             }
 
-            // Step 3: fetch Account details with FLS enforcement
-            List<Account> relatedAccounts = [
-                SELECT Id, Name, Industry, AnnualRevenue
-                FROM Account
-                WHERE Id IN :relatedAccountIds
-                WITH USER_MODE
-            ];
+            // Step 3: fetch Account details, excluding Person Accounts when the field exists
+            List<Account> relatedAccounts;
+            if (isPersonAccountEnabled()) {
+                relatedAccounts = [
+                    SELECT Id, Name, Industry, AnnualRevenue
+                    FROM Account
+                    WHERE Id IN :relatedAccountIds
+                    AND IsPersonAccount = FALSE
+                    WITH USER_MODE
+                ];
+            } else {
+                relatedAccounts = [
+                    SELECT Id, Name, Industry, AnnualRevenue
+                    FROM Account
+                    WHERE Id IN :relatedAccountIds
+                    WITH USER_MODE
+                ];
+            }
 
             // Step 4: also count total ACR entries per related account for RelationshipCount
             List<AggregateResult> relationshipCounts = [
@@ -168,6 +179,11 @@ public with sharing class IndirectAccountViewerController {
                 }
             }
         }
+    }
+
+    // Returns true only when IsPersonAccount is a real field in this org
+    private static Boolean isPersonAccountEnabled() {
+        return Schema.SObjectType.Account.fields.getMap().containsKey('IsPersonAccount');
     }
 
     /**
