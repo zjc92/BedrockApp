@@ -26,3 +26,31 @@
 .account-meta {
     padding-left: 0.25rem;
 }
+
+.record-link {
+    color: #0176d3;
+    font-size: 0.8125rem;
+    font-weight: normal;
+    cursor: pointer;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    line-height: inherit;
+}
+
+.record-link:hover {
+    text-decoration: underline;
+    color: #014486;
+}
+
+.record-link_account {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0176d3;
+}
+
+.record-link_account:hover {
+    text-decoration: underline;
+    color: #014486;
+}

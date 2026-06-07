@@ -23,23 +23,15 @@
 
                 <!-- Section 1: Current Account → Direct Contacts -->
                 <div class="slds-m-bottom_medium">
-                    <h2 class="slds-text-heading_small slds-m-bottom_small">
-                        Direct Contacts
-                    </h2>
+                    <h2 class="slds-text-heading_small slds-m-bottom_small">Direct Contacts</h2>
 
-                    <!-- Root: current account -->
+                    <!-- Root: current account (plain label — this IS the current record) -->
                     <div class="slds-media slds-media_center slds-m-bottom_x-small">
                         <div class="slds-media__figure">
-                            <lightning-icon
-                                icon-name="standard:account"
-                                size="small"
-                                alternative-text="Account">
-                            </lightning-icon>
+                            <lightning-icon icon-name="standard:account" size="small" alternative-text="Account"></lightning-icon>
                         </div>
                         <div class="slds-media__body">
-                            <span class="slds-text-body_regular slds-text-color_default">
-                                <strong>{rootAccountName}</strong>
-                            </span>
+                            <strong class="slds-text-body_regular">{rootAccountName}</strong>
                         </div>
                     </div>
 
@@ -47,17 +39,21 @@
                     <template for:each={directContacts} for:item="contact">
                         <div key={contact.contactId} class="slds-media slds-media_center branch-contact slds-m-bottom_xx-small">
                             <div class="slds-media__figure branch-line">
-                                <lightning-icon
-                                    icon-name="standard:contact"
-                                    size="x-small"
-                                    alternative-text="Contact">
-                                </lightning-icon>
+                                <lightning-icon icon-name="standard:contact" size="x-small" alternative-text="Contact"></lightning-icon>
                             </div>
-                            <div class="slds-media__body">
-                                <span class="slds-text-body_small">{contact.contactName}</span>
-                                <template lwc:if={contact.role}>
-                                    <span class="slds-badge slds-m-left_x-small role-badge">
-                                        {contact.role}
+                            <div class="slds-media__body slds-grid slds-wrap slds-grid_vertical-align-center">
+                                <!-- Contact name link -->
+                                <button
+                                    class="slds-button slds-button_reset record-link slds-m-right_x-small"
+                                    data-recordid={contact.contactId}
+                                    data-objectapiname="Contact"
+                                    onclick={navigateToRecord}>
+                                    {contact.contactName}
+                                </button>
+                                <!-- One badge per role -->
+                                <template for:each={contact.roles} for:item="roleEntry">
+                                    <span key={roleEntry.key} class="slds-badge slds-m-right_xx-small role-badge">
+                                        {roleEntry.label}
                                     </span>
                                 </template>
                             </div>
@@ -70,26 +66,24 @@
 
                 <!-- Section 2: Indirect Accounts via Shared Contacts -->
                 <div>
-                    <h2 class="slds-text-heading_small slds-m-bottom_small">
-                        Indirect Accounts via Shared Contacts
-                    </h2>
+                    <h2 class="slds-text-heading_small slds-m-bottom_small">Indirect Accounts via Shared Contacts</h2>
 
                     <template for:each={indirectAccounts} for:item="account">
                         <div key={account.accountId} class="slds-box slds-box_x-small slds-m-bottom_small indirect-account-card">
 
-                            <!-- Account header -->
+                            <!-- Account header with link -->
                             <div class="slds-media slds-media_center slds-m-bottom_x-small">
                                 <div class="slds-media__figure">
-                                    <lightning-icon
-                                        icon-name="standard:account"
-                                        size="small"
-                                        alternative-text="Indirect Account">
-                                    </lightning-icon>
+                                    <lightning-icon icon-name="standard:account" size="small" alternative-text="Indirect Account"></lightning-icon>
                                 </div>
                                 <div class="slds-media__body">
-                                    <span class="slds-text-body_regular">
-                                        <strong>{account.accountName}</strong>
-                                    </span>
+                                    <button
+                                        class="slds-button slds-button_reset record-link record-link_account"
+                                        data-recordid={account.accountId}
+                                        data-objectapiname="Account"
+                                        onclick={navigateToRecord}>
+                                        {account.accountName}
+                                    </button>
                                 </div>
                             </div>
 
@@ -101,7 +95,7 @@
                                         <span class="slds-text-body_small">{account.industry}</span>
                                     </div>
                                 </template>
-                                <template lwc:if={account.lifetimeValue}>
+                                <template lwc:if={account.formattedRevenue}>
                                     <div class="slds-col slds-size_1-of-2">
                                         <span class="slds-text-color_weak slds-text-body_small">Annual Revenue: </span>
                                         <span class="slds-text-body_small">{account.formattedRevenue}</span>
@@ -121,17 +115,21 @@
                             <template for:each={account.sharedContacts} for:item="shared">
                                 <div key={shared.contactId} class="slds-media slds-media_center branch-contact slds-m-bottom_xx-small">
                                     <div class="slds-media__figure branch-line">
-                                        <lightning-icon
-                                            icon-name="standard:contact"
-                                            size="x-small"
-                                            alternative-text="Shared Contact">
-                                        </lightning-icon>
+                                        <lightning-icon icon-name="standard:contact" size="x-small" alternative-text="Shared Contact"></lightning-icon>
                                     </div>
-                                    <div class="slds-media__body">
-                                        <span class="slds-text-body_small">{shared.contactName}</span>
-                                        <template lwc:if={shared.role}>
-                                            <span class="slds-badge slds-m-left_x-small role-badge">
-                                                {shared.role}
+                                    <div class="slds-media__body slds-grid slds-wrap slds-grid_vertical-align-center">
+                                        <!-- Contact name link -->
+                                        <button
+                                            class="slds-button slds-button_reset record-link slds-m-right_x-small"
+                                            data-recordid={shared.contactId}
+                                            data-objectapiname="Contact"
+                                            onclick={navigateToRecord}>
+                                            {shared.contactName}
+                                        </button>
+                                        <!-- One badge per role -->
+                                        <template for:each={shared.roles} for:item="roleEntry">
+                                            <span key={roleEntry.key} class="slds-badge slds-m-right_xx-small role-badge">
+                                                {roleEntry.label}
                                             </span>
                                         </template>
                                     </div>

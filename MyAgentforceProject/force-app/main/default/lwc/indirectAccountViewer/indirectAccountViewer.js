@@ -1,4 +1,5 @@
 import { LightningElement, api } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import getRelationshipTree from '@salesforce/apex/IndirectAccountViewerController.getRelationshipTree';
 
 const USD_FORMATTER = new Intl.NumberFormat('en-US', {
@@ -8,7 +9,27 @@ const USD_FORMATTER = new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0
 });
 
-export default class IndirectAccountViewer extends LightningElement {
+function parseRoles(roleString) {
+    if (!roleString) return [];
+    return roleString.split(';').map((r, i) => ({ key: i, label: r.trim() })).filter(r => r.label);
+}
+
+function mapContact(node) {
+    return {
+        ...node,
+        roles: parseRoles(node.role)
+    };
+}
+
+function mapIndirectAccount(acc) {
+    return {
+        ...acc,
+        formattedRevenue: acc.lifetimeValue != null ? USD_FORMATTER.format(acc.lifetimeValue) : null,
+        sharedContacts: (acc.sharedContacts ?? []).map(mapContact)
+    };
+}
+
+export default class IndirectAccountViewer extends NavigationMixin(LightningElement) {
     @api recordId;
     @api recordLimit = 10;
     @api sortBy = 'Name';
@@ -37,13 +58,8 @@ export default class IndirectAccountViewer extends LightningElement {
         })
             .then(tree => {
                 this.rootAccountName = tree.rootAccountName;
-                this.directContacts = tree.directContacts ?? [];
-                this.indirectAccounts = (tree.indirectAccounts ?? []).map(acc => ({
-                    ...acc,
-                    formattedRevenue: acc.lifetimeValue != null
-                        ? USD_FORMATTER.format(acc.lifetimeValue)
-                        : null
-                }));
+                this.directContacts = (tree.directContacts ?? []).map(mapContact);
+                this.indirectAccounts = (tree.indirectAccounts ?? []).map(mapIndirectAccount);
             })
             .catch(error => {
                 this.errorMessage =
@@ -54,6 +70,16 @@ export default class IndirectAccountViewer extends LightningElement {
             .finally(() => {
                 this.isLoading = false;
             });
+    }
+
+    navigateToRecord(event) {
+        const recordId = event.currentTarget.dataset.recordid;
+        const objectApiName = event.currentTarget.dataset.objectapiname;
+        if (!recordId) return;
+        this[NavigationMixin.Navigate]({
+            type: 'standard__recordPage',
+            attributes: { recordId, objectApiName, actionName: 'view' }
+        });
     }
 
     get hasData() {
