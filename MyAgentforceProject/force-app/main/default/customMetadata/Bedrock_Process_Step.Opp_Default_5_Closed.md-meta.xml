@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Opp Default 5 Closed</label>
+    <protected>false</protected>
+    <values>
+        <field>Object_API_Name__c</field>
+        <value xsi:type="xsd:string">Opportunity</value>
+    </values>
+    <values>
+        <field>Region__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Customer_Rating__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Min_Amount__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Max_Amount__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Step_Label__c</field>
+        <value xsi:type="xsd:string">Closed</value>
+    </values>
+    <values>
+        <field>Display_Order__c</field>
+        <value xsi:type="xsd:double">50</value>
+    </values>
+    <values>
+        <field>Action_Type__c</field>
+        <value xsi:type="xsd:string">Close</value>
+    </values>
+    <values>
+        <field>Description__c</field>
+        <value xsi:type="xsd:string">Finalise and execute the agreement. Hand off to account management and delivery teams.</value>
+    </values>
+    <values>
+        <field>Active__c</field>
+        <value xsi:type="xsd:boolean">false</value>
+    </values>
+</CustomMetadata>

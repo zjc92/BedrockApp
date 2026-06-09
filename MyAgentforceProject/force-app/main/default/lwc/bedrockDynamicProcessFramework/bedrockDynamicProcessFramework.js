@@ -28,13 +28,15 @@ export default class BedrockDynamicProcessFramework extends LightningElement {
         if (!this.objectApiName) return;
         this.isLoading = true;
         this.errorMessage = undefined;
-        getProcessSteps({ objectApiName: this.objectApiName })
+
+        getProcessSteps({ recordId: this.recordId, objectApiName: this.objectApiName })
             .then(steps => {
                 this._selectedIndex = 0;
                 this.processSteps = this._mapSteps(steps, 0);
             })
             .catch(error => {
-                this.errorMessage = error?.body?.message ?? error?.message ?? 'Unable to load process steps.';
+                this.errorMessage =
+                    error?.body?.message ?? error?.message ?? 'Unable to load process configuration.';
                 this.processSteps = [];
             })
             .finally(() => {
@@ -91,5 +93,9 @@ export default class BedrockDynamicProcessFramework extends LightningElement {
 
     get hasError() {
         return !!this.errorMessage;
+    }
+
+    get emptyMessage() {
+        return `No process configuration found for object: ${this.objectApiName ?? 'unknown'}`;
     }
 }
