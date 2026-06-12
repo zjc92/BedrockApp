@@ -13,9 +13,14 @@
             <objects>
                 <object>Account</object>
             </objects>
-            <property name="recordLimit" type="Integer" label="Record Limit" default="10" min="1" max="100" />
-            <property name="sortBy" type="String" label="Sort By" datasource="Name,RelationshipCount" default="Name" />
-            <property name="sortDirection" type="String" label="Sort Direction" datasource="ASC,DESC" default="ASC" />
+            <property name="recordLimit" type="Integer" label="Record Limit" default="10" min="1" max="100" description="Maximum number of indirect accounts to display." />
+            <property name="sortBy" type="String" label="Sort By" datasource="Name,RelationshipCount" default="RelationshipCount" description="Sort indirect accounts by Account Name or Shared Contact Count." />
+            <property name="sortDirection" type="String" label="Sort Direction" datasource="ASC,DESC" default="DESC" description="Sort order: ASC (ascending) or DESC (descending)." />
+        </targetConfig>
+        <targetConfig targets="lightning__AppPage">
+            <property name="recordLimit" type="Integer" label="Record Limit" default="10" min="1" max="100" description="Maximum number of indirect accounts to display." />
+            <property name="sortBy" type="String" label="Sort By" datasource="Name,RelationshipCount" default="RelationshipCount" description="Sort indirect accounts by Account Name or Shared Contact Count." />
+            <property name="sortDirection" type="String" label="Sort Direction" datasource="ASC,DESC" default="DESC" description="Sort order: ASC (ascending) or DESC (descending)." />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

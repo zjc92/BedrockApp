@@ -383,8 +383,8 @@ public with sharing class IndirectAccountViewerController {
                 Boolean shouldSwap;
                 if (sortBy == 'RelationshipCount') {
                     shouldSwap = ascending
-                        ? nodes[i].relationshipCount > nodes[j].relationshipCount
-                        : nodes[i].relationshipCount < nodes[j].relationshipCount;
+                        ? nodes[i].sharedContactCount > nodes[j].sharedContactCount
+                        : nodes[i].sharedContactCount < nodes[j].sharedContactCount;
                 } else {
                     String nameI = nodes[i].accountName ?? '';
                     String nameJ = nodes[j].accountName ?? '';
@@ -412,8 +412,8 @@ public with sharing class IndirectAccountViewerController {
                 Boolean shouldSwap;
                 if (sortBy == 'RelationshipCount') {
                     shouldSwap = ascending
-                        ? results[i].relationshipCount > results[j].relationshipCount
-                        : results[i].relationshipCount < results[j].relationshipCount;
+                        ? results[i].sharedContactCount > results[j].sharedContactCount
+                        : results[i].sharedContactCount < results[j].sharedContactCount;
                 } else {
                     String nameI = results[i].accountName ?? '';
                     String nameJ = results[j].accountName ?? '';

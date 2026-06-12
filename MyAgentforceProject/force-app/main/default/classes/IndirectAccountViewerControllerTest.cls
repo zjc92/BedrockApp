@@ -136,9 +136,11 @@ private class IndirectAccountViewerControllerTest {
 
         Assert.areEqual(2, results.size(), 'Should return 2 results');
         Assert.isTrue(
-            results[0].relationshipCount >= results[1].relationshipCount,
-            'Results should be sorted by RelationshipCount DESC'
+            results[0].sharedContactCount >= results[1].sharedContactCount,
+            'Results should be sorted by sharedContactCount DESC'
         );
+        Assert.areEqual('Alpha Related', results[0].accountName,
+            'Alpha Related (2 shared) should come first when sorted by sharedContactCount DESC');
     }
 
     @IsTest
@@ -415,6 +417,50 @@ private class IndirectAccountViewerControllerTest {
 
         Assert.isTrue(tree.indirectAccounts.size() <= 10,
             'Null limit should default to 10');
+    }
+
+    @IsTest
+    static void tree_shouldSortBySharedContactCountDesc_WhenSortByIsRelationshipCount() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'RelationshipCount', 'DESC'
+            );
+        Test.stopTest();
+
+        Assert.areEqual(2, tree.indirectAccounts.size(), 'Should return 2 indirect accounts');
+        Assert.areEqual('Alpha Related', tree.indirectAccounts[0].accountName,
+            'Alpha Related (2 shared contacts) should come first when sorted by sharedContactCount DESC');
+        Assert.areEqual('Beta Related', tree.indirectAccounts[1].accountName,
+            'Beta Related (1 shared contact) should come second');
+        Assert.isTrue(
+            tree.indirectAccounts[0].sharedContactCount >= tree.indirectAccounts[1].sharedContactCount,
+            'sharedContactCount should be non-increasing in DESC order'
+        );
+    }
+
+    @IsTest
+    static void tree_shouldSortBySharedContactCountAsc_WhenSortByIsRelationshipCount() {
+        Account primaryAccount = [SELECT Id FROM Account WHERE Name = 'Primary Account' LIMIT 1];
+
+        Test.startTest();
+        IndirectAccountViewerController.RelationshipTreeDTO tree =
+            IndirectAccountViewerController.getRelationshipTree(
+                primaryAccount.Id, 10, 'RelationshipCount', 'ASC'
+            );
+        Test.stopTest();
+
+        Assert.areEqual(2, tree.indirectAccounts.size(), 'Should return 2 indirect accounts');
+        Assert.areEqual('Beta Related', tree.indirectAccounts[0].accountName,
+            'Beta Related (1 shared contact) should come first when sorted by sharedContactCount ASC');
+        Assert.areEqual('Alpha Related', tree.indirectAccounts[1].accountName,
+            'Alpha Related (2 shared contacts) should come second');
+        Assert.isTrue(
+            tree.indirectAccounts[0].sharedContactCount <= tree.indirectAccounts[1].sharedContactCount,
+            'sharedContactCount should be non-decreasing in ASC order'
+        );
     }
 
     @IsTest

@@ -140,13 +140,22 @@ public with sharing class BedrockDynamicProcessController {
         Bedrock_Process_Step__mdt step,
         Decimal currentAmount
     ) {
-        if (step.Min_Amount__c == null) {
+        Boolean hasMin = step.Min_Amount__c != null;
+        Boolean hasMax = step.Max_Amount__c != null;
+
+        if (!hasMin && !hasMax) {
             return true;
         }
         if (currentAmount == null) {
             return false;
         }
-        return currentAmount >= step.Min_Amount__c;
+        if (hasMin && currentAmount < step.Min_Amount__c) {
+            return false;
+        }
+        if (hasMax && currentAmount > step.Max_Amount__c) {
+            return false;
+        }
+        return true;
     }
 
     // -------------------------------------------------------------------------

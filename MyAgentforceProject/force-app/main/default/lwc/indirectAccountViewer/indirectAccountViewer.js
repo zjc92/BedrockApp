@@ -32,8 +32,8 @@ function mapIndirectAccount(acc) {
 export default class IndirectAccountViewer extends NavigationMixin(LightningElement) {
     @api recordId;
     @api recordLimit = 10;
-    @api sortBy = 'Name';
-    @api sortDirection = 'ASC';
+    @api sortBy = 'RelationshipCount';
+    @api sortDirection = 'DESC';
 
     rootAccountName;
     directContacts = [];
