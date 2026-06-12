@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Action_Target__c</fullName>
+    <label>Action Target</label>
+    <description>API name of the Screen Flow to launch when Action Type is Launch Flow.</description>
+    <inlineHelpText>Enter the Salesforce API name of the Screen Flow (e.g. My_Screen_Flow). Used only when Action Type = Launch Flow.</inlineHelpText>
+    <type>Text</type>
+    <length>255</length>
+    <unique>false</unique>
+    <caseSensitive>false</caseSensitive>
+</CustomField>

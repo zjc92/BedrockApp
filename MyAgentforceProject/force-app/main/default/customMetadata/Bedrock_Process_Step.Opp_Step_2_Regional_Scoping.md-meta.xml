@@ -11,16 +11,16 @@
         <value xsi:type="xsd:double">2</value>
     </values>
     <values>
-        <field>Region__c</field>
-        <value xsi:type="xsd:string">West</value>
+        <field>Criteria_Region__c</field>
+        <value xsi:type="xsd:string">North</value>
     </values>
     <values>
-        <field>Min_Amount__c</field>
+        <field>Criteria_Min_Amount__c</field>
         <value xsi:nil="true"/>
     </values>
     <values>
         <field>Step_Label__c</field>
-        <value xsi:type="xsd:string">2. West Regional Review</value>
+        <value xsi:type="xsd:string">2. North Regional Review</value>
     </values>
     <values>
         <field>Action_Type__c</field>

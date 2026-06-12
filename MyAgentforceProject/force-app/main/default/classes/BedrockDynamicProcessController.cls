@@ -66,6 +66,7 @@ public with sharing class BedrockDynamicProcessController {
                        Step_Label__c,
                        Display_Order__c,
                        Action_Type__c,
+                       Action_Target__c,
                        Description__c
                 FROM   Bedrock_Process_Step__mdt
                 WHERE  DeveloperName IN :matchedNames
@@ -188,6 +189,7 @@ public with sharing class BedrockDynamicProcessController {
         @AuraEnabled public String  stepLabel;
         @AuraEnabled public Integer displayOrder;
         @AuraEnabled public String  actionType;
+        @AuraEnabled public String  actionTarget;
         @AuraEnabled public String  description;
 
         public ProcessStepDTO(Bedrock_Process_Step__mdt step) {
@@ -196,6 +198,7 @@ public with sharing class BedrockDynamicProcessController {
             this.displayOrder = step.Display_Order__c != null
                 ? Integer.valueOf(step.Display_Order__c) : 0;
             this.actionType   = step.Action_Type__c;
+            this.actionTarget = step.Action_Target__c;
             this.description  = step.Description__c;
         }
     }

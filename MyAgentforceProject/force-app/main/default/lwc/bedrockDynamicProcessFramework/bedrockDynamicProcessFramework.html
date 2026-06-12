@@ -1,141 +1,113 @@
 <template>
-    <lightning-card title="Business Process Workspace" icon-name="custom:custom62">
-        <div class="slds-card__body slds-card__body_inner">
+    <!-- Error state -->
+    <template lwc:if={hasError}>
+        <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+            <span class="slds-assistive-text">error</span>
+            <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small">
+                <lightning-icon icon-name="utility:error" alternative-text="Error" size="x-small" variant="inverse"></lightning-icon>
+            </span>
+            <h2>{errorMessage}</h2>
+        </div>
+    </template>
 
-            <!-- Error state -->
-            <template lwc:if={hasError}>
-                <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
-                    <span class="slds-assistive-text">Error</span>
-                    <h2>{errorMessage}</h2>
-                </div>
-            </template>
+    <!-- Empty state -->
+    <template lwc:elseif={isEmpty}>
+        <div class="slds-box slds-text-align_center slds-text-color_weak">
+            <p>{emptyMessage}</p>
+        </div>
+    </template>
 
-            <!-- Empty state -->
-            <template lwc:elseif={isEmpty}>
-                <div class="slds-illustration slds-illustration_small slds-p-around_medium">
-                    <div class="slds-text-longform">
-                        <p class="slds-text-body_regular slds-text-color_weak">{emptyMessage}</p>
-                    </div>
-                </div>
-            </template>
-
-            <!-- Chevron path layout -->
-            <template lwc:elseif={isChevron}>
-                <div class="slds-path" role="navigation" aria-label="Business Process">
-                    <div class="slds-grid slds-path__track">
-                        <div class="slds-grid slds-path__scroller-container">
-                            <div class="slds-path__scroller" role="application">
-                                <div class="slds-path__scroller_inner">
-                                    <ul
-                                        class="slds-path__nav"
-                                        role="listbox"
-                                        aria-orientation="horizontal"
-                                    >
-                                        <template for:each={processSteps} for:item="step">
-                                            <li
-                                                key={step.stepId}
-                                                class={step.computedClass}
-                                                role="presentation"
-                                            >
-                                                <a
-                                                    class="slds-path__link"
-                                                    role="option"
-                                                    aria-selected={step.isSelected}
-                                                    data-id={step.stepId}
-                                                    onclick={handleChevronClick}
-                                                    title={step.stepLabel}
-                                                    href="javascript:void(0);"
-                                                >
-                                                    <span class="slds-path__stage">
-                                                        <lightning-icon
-                                                            icon-name="utility:check"
-                                                            size="x-small"
-                                                            alternative-text="Completed"
-                                                        ></lightning-icon>
-                                                    </span>
-                                                    <span class="slds-path__title">{step.stepLabel}</span>
-                                                </a>
-                                            </li>
-                                        </template>
-                                    </ul>
-                                </div>
-                            </div>
+    <!-- Chevron path -->
+    <template lwc:elseif={isChevron}>
+        <div class="slds-path">
+            <div class="slds-grid slds-path__track">
+                <div class="slds-grid slds-path__scroller-container">
+                    <div class="slds-path__scroller" role="application">
+                        <div class="slds-path__scroller_inner">
+                            <ul class="slds-path__nav" role="listbox" aria-label="Process Steps" aria-orientation="horizontal">
+                                <template for:each={processSteps} for:item="step">
+                                    <li key={step.stepId}
+                                        class={step.computedClass}
+                                        role="option"
+                                        aria-selected={step.isSelected}>
+                                        <a class="slds-path__link"
+                                           href="javascript:void(0);"
+                                           tabindex="0"
+                                           data-id={step.stepId}
+                                           onclick={handleChevronClick}>
+                                            <span class="slds-path__stage">
+                                                <lightning-icon icon-name="utility:check" size="x-small" alternative-text="Current Stage"></lightning-icon>
+                                            </span>
+                                            <span class="slds-path__title">{step.stepLabel}</span>
+                                        </a>
+                                    </li>
+                                </template>
+                            </ul>
                         </div>
                     </div>
                 </div>
-            </template>
-
-            <!-- Button layout -->
-            <template lwc:elseif={isButtons}>
-                <div class="slds-button-group slds-p-around_small" role="group" aria-label="Process Steps">
-                    <template for:each={processSteps} for:item="step">
-                        <lightning-button
-                            key={step.stepId}
-                            label={step.stepLabel}
-                            variant={step.buttonVariant}
-                            data-id={step.stepId}
-                            onclick={handleChevronClick}
-                            class="slds-m-right_x-small"
-                        ></lightning-button>
-                    </template>
-                </div>
-            </template>
-
+            </div>
         </div>
-    </lightning-card>
+    </template>
 
-    <!-- Step detail modal -->
+    <!-- Button rendering style -->
+    <template lwc:elseif={isButtons}>
+        <div class="slds-button-group" role="group">
+            <template for:each={processSteps} for:item="step">
+                <lightning-button
+                    key={step.stepId}
+                    label={step.stepLabel}
+                    variant={step.buttonVariant}
+                    data-id={step.stepId}
+                    onclick={handleChevronClick}>
+                </lightning-button>
+            </template>
+        </div>
+    </template>
+
+    <!-- Modal: always shown when isModalOpen (covers Open Modal + Launch Flow description) -->
     <template lwc:if={isModalOpen}>
-        <section
-            role="dialog"
-            tabindex="-1"
-            aria-labelledby="modal-heading"
-            aria-modal="true"
-            aria-describedby="modal-content"
-            class="slds-modal slds-fade-in-open"
-        >
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-label={selectedStep.stepLabel} class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container">
                 <header class="slds-modal__header">
-                    <button
-                        class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
-                        title="Close"
-                        onclick={closeModal}
-                    >
-                        <lightning-icon
-                            icon-name="utility:close"
-                            alternative-text="Close"
-                            size="small"
-                        ></lightning-icon>
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
                         <span class="slds-assistive-text">Close</span>
                     </button>
-                    <h2 id="modal-heading" class="slds-modal__title slds-hyphenate">
-                        {selectedStep.stepLabel}
-                    </h2>
-                    <p class="slds-m-top_x-small">
-                        <lightning-badge
-                            label={selectedStep.actionType}
-                            class="action-type-badge"
-                        ></lightning-badge>
-                    </p>
+                    <h2 class="slds-modal__title slds-hyphenate">{selectedStep.stepLabel}</h2>
                 </header>
-
-                <div class="slds-modal__content slds-p-around_medium" id="modal-content">
-                    <template lwc:if={selectedStep.description}>
-                        <p class="slds-text-body_regular">{selectedStep.description}</p>
-                    </template>
-                    <template lwc:else>
-                        <p class="slds-text-body_regular slds-text-color_weak">
-                            No description available for this step.
-                        </p>
-                    </template>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p>{selectedStep.description}</p>
                 </div>
-
                 <footer class="slds-modal__footer">
-                    <lightning-button
-                        label="Close"
-                        variant="brand"
-                        onclick={closeModal}
-                    ></lightning-button>
+                    <lightning-button variant="brand" label={selectedStep.actionType} onclick={handleActionButton}></lightning-button>
+                    <lightning-button variant="neutral" label="Close" onclick={closeModal}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+    </template>
+
+    <!-- Modal: Launch Flow -->
+    <template lwc:if={isFlowActive}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-label={selectedStep.stepLabel} class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeActionContainer}>
+                        <lightning-icon icon-name="utility:close" size="small" alternative-text="Close"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 class="slds-modal__title slds-hyphenate">{selectedStep.stepLabel}</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning-flow
+                        flow-api-name={activeFlowApiName}
+                        flow-input-variables={flowInputVariables}
+                        onstatuschange={handleFlowStatusChange}>
+                    </lightning-flow>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button variant="neutral" label="Close" onclick={closeActionContainer}></lightning-button>
                 </footer>
             </div>
         </section>
