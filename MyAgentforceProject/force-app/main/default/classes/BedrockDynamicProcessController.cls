@@ -1,45 +1,85 @@
 /**
  * AuraEnabled controller for the Bedrock Dynamic Process Framework LWC.
- * Selects active Bedrock_Process_Step__mdt records whose criteria match
- * the current record's attributes (Bedrock_Region__c, Amount, Customer_Rating__c).
- * Blank criteria values act as wildcards and match any record value.
+ *
+ * Retrieves active Bedrock_Process_Step__mdt records that match the calling
+ * record's runtime context (object API name, region, and deal amount).
+ * Blank criteria fields on a metadata row act as wildcards and match any value.
+ *
+ * Custom Metadata Types are read via getAll() — the platform does not support
+ * SOQL against __mdt in Apex. Filtering and ordering are performed in-memory.
+ * Security.stripInaccessible is applied to equivalent SObject representations
+ * via a SOQL re-fetch of the matched DeveloperNames so the platform FLS check
+ * runs against real query results before DTO mapping.
  */
 public with sharing class BedrockDynamicProcessController {
 
+    private static final String STEP_LABEL_FIELD          = 'Step_Label__c';
+    private static final String DISPLAY_ORDER_FIELD       = 'Display_Order__c';
+    private static final String ACTION_TYPE_FIELD         = 'Action_Type__c';
+    private static final String DESCRIPTION_FIELD         = 'Description__c';
+    private static final String CRITERIA_REGION_FIELD     = 'Region__c';
+    private static final String CRITERIA_MIN_AMOUNT_FIELD = 'Min_Amount__c';
+    private static final String OBJECT_API_NAME_FIELD     = 'Object_API_Name__c';
+    private static final String ACTIVE_FIELD              = 'Active__c';
+
     /**
-     * Returns ordered process step definitions that match the current record's
-     * attributes. For Opportunity records, Bedrock_Region__c, Amount, and
-     * Customer_Rating__c are evaluated against each metadata row's criteria.
-     * Blank criteria fields are wildcards and always pass.
+     * Returns ordered process step DTOs whose criteria match the supplied
+     * runtime context. Wildcard metadata rows (blank criteria) match any context.
      *
-     * @param recordId       Id of the current record (used to fetch attributes).
      * @param objectApiName  API name of the SObject (e.g. 'Opportunity').
-     * @return               Ordered list of ProcessStepDTO, empty if none match.
-     * @throws AuraHandledException on blank objectApiName or query failure.
+     * @param currentRegion  Value of Bedrock_Region__c on the current record.
+     * @param currentAmount  Value of BedrockAmount__c on the current record.
+     * @return               Ordered list of ProcessStepDTO. Empty list when
+     *                       objectApiName is blank or no rows match.
      */
     @AuraEnabled(cacheable=true)
-    public static List<ProcessStepDTO> getProcessSteps(Id recordId, String objectApiName) {
+    public static List<ProcessStepDTO> getActiveProcessSteps(
+        String objectApiName,
+        String currentRegion,
+        Decimal currentAmount
+    ) {
         if (String.isBlank(objectApiName)) {
-            throw new AuraHandledException('Object API Name is required.');
+            return new List<ProcessStepDTO>();
         }
 
         try {
-            RecordAttributes attrs = fetchRecordAttributes(recordId, objectApiName);
-
             List<Bedrock_Process_Step__mdt> allSteps =
                 Bedrock_Process_Step__mdt.getAll().values();
 
-            List<Bedrock_Process_Step__mdt> matched = new List<Bedrock_Process_Step__mdt>();
-            for (Bedrock_Process_Step__mdt step : allSteps) {
-                if (step.Active__c && matches(step, objectApiName, attrs)) {
-                    matched.add(step);
-                }
+            List<Bedrock_Process_Step__mdt> matched =
+                filterAndSort(allSteps, objectApiName, currentRegion, currentAmount);
+
+            if (matched.isEmpty()) {
+                return new List<ProcessStepDTO>();
             }
 
-            matched.sort(new StepOrderComparator());
+            Set<String> matchedNames = new Set<String>();
+            for (Bedrock_Process_Step__mdt step : matched) {
+                matchedNames.add(step.DeveloperName);
+            }
+
+            // Re-fetch matched rows via SOQL so Security.stripInaccessible
+            // operates on proper query-result SObjects.
+            List<Bedrock_Process_Step__mdt> queried = [
+                SELECT Id,
+                       DeveloperName,
+                       Step_Label__c,
+                       Display_Order__c,
+                       Action_Type__c,
+                       Description__c
+                FROM   Bedrock_Process_Step__mdt
+                WHERE  DeveloperName IN :matchedNames
+                ORDER BY Display_Order__c ASC NULLS LAST
+            ];
+
+            SObjectAccessDecision decision = Security.stripInaccessible(
+                AccessType.READABLE,
+                queried
+            );
 
             List<ProcessStepDTO> results = new List<ProcessStepDTO>();
-            for (Bedrock_Process_Step__mdt step : matched) {
+            for (Bedrock_Process_Step__mdt step :
+                    (List<Bedrock_Process_Step__mdt>) decision.getRecords()) {
                 results.add(new ProcessStepDTO(step));
             }
             return results;
@@ -54,107 +94,95 @@ public with sharing class BedrockDynamicProcessController {
     }
 
     // -------------------------------------------------------------------------
-    // Matching helpers
+    // Filtering and sorting
     // -------------------------------------------------------------------------
 
-    private static Boolean matches(
-        Bedrock_Process_Step__mdt step,
+    private static List<Bedrock_Process_Step__mdt> filterAndSort(
+        List<Bedrock_Process_Step__mdt> allSteps,
         String objectApiName,
-        RecordAttributes attrs
+        String currentRegion,
+        Decimal currentAmount
     ) {
-        if (step.Object_API_Name__c != objectApiName) {
+        List<Bedrock_Process_Step__mdt> matched =
+            new List<Bedrock_Process_Step__mdt>();
+
+        for (Bedrock_Process_Step__mdt step : allSteps) {
+            if (!step.Active__c) {
+                continue;
+            }
+            if (step.Object_API_Name__c != objectApiName) {
+                continue;
+            }
+            if (!regionMatches(step, currentRegion)) {
+                continue;
+            }
+            if (!amountMatches(step, currentAmount)) {
+                continue;
+            }
+            matched.add(step);
+        }
+
+        matched.sort(new StepOrderComparator());
+        return matched;
+    }
+
+    private static Boolean regionMatches(
+        Bedrock_Process_Step__mdt step,
+        String currentRegion
+    ) {
+        if (String.isBlank(step.Region__c)) {
+            return true;
+        }
+        return step.Region__c == currentRegion;
+    }
+
+    private static Boolean amountMatches(
+        Bedrock_Process_Step__mdt step,
+        Decimal currentAmount
+    ) {
+        if (step.Min_Amount__c == null) {
+            return true;
+        }
+        if (currentAmount == null) {
             return false;
         }
-
-        // Region — blank metadata value = wildcard
-        if (String.isNotBlank(step.Region__c)) {
-            if (String.isBlank(attrs.region) || step.Region__c != attrs.region) {
-                return false;
-            }
-        }
-
-        // Customer Rating — blank metadata value = wildcard
-        if (String.isNotBlank(step.Customer_Rating__c)) {
-            if (String.isBlank(attrs.customerRating) || step.Customer_Rating__c != attrs.customerRating) {
-                return false;
-            }
-        }
-
-        // Min Amount — blank metadata value = no lower bound
-        if (step.Min_Amount__c != null) {
-            if (attrs.amount == null || attrs.amount < step.Min_Amount__c) {
-                return false;
-            }
-        }
-
-        // Max Amount — blank metadata value = no upper bound
-        if (step.Max_Amount__c != null) {
-            if (attrs.amount == null || attrs.amount > step.Max_Amount__c) {
-                return false;
-            }
-        }
-
-        return true;
+        return currentAmount >= step.Min_Amount__c;
     }
 
     // -------------------------------------------------------------------------
-    // Record attribute fetching
+    // Comparator
     // -------------------------------------------------------------------------
-
-    private static RecordAttributes fetchRecordAttributes(Id recordId, String objectApiName) {
-        RecordAttributes attrs = new RecordAttributes();
-        if (recordId == null || objectApiName != 'Opportunity') {
-            return attrs;
-        }
-
-        List<Opportunity> opps = [
-            SELECT Bedrock_Region__c, Amount, Customer_Rating__c
-            FROM Opportunity
-            WHERE Id = :recordId
-            WITH USER_MODE
-            LIMIT 1
-        ];
-
-        if (!opps.isEmpty()) {
-            attrs.region         = opps[0].Bedrock_Region__c;
-            attrs.amount         = opps[0].Amount;
-            attrs.customerRating = opps[0].Customer_Rating__c;
-        }
-        return attrs;
-    }
-
-    // -------------------------------------------------------------------------
-    // Inner classes
-    // -------------------------------------------------------------------------
-
-    private class RecordAttributes {
-        String  region;
-        Decimal amount;
-        String  customerRating;
-    }
 
     private class StepOrderComparator implements Comparator<Bedrock_Process_Step__mdt> {
-        public Integer compare(Bedrock_Process_Step__mdt a, Bedrock_Process_Step__mdt b) {
+        public Integer compare(
+            Bedrock_Process_Step__mdt a,
+            Bedrock_Process_Step__mdt b
+        ) {
             Decimal orderA = a.Display_Order__c ?? 0;
             Decimal orderB = b.Display_Order__c ?? 0;
             if (orderA < orderB) return -1;
-            if (orderA > orderB) return 1;
+            if (orderA > orderB) return  1;
             return 0;
         }
     }
 
+    // -------------------------------------------------------------------------
+    // DTO
+    // -------------------------------------------------------------------------
+
     /**
-     * DTO returned to the LWC.
+     * Data transfer object returned to the LWC. Contains only the fields
+     * required to render the process path and the step detail modal.
      */
     public class ProcessStepDTO {
-        @AuraEnabled public String  id;
+        @AuraEnabled public String  stepId;
         @AuraEnabled public String  stepLabel;
         @AuraEnabled public Integer displayOrder;
         @AuraEnabled public String  actionType;
         @AuraEnabled public String  description;
 
         public ProcessStepDTO(Bedrock_Process_Step__mdt step) {
-            this.id           = step.DeveloperName;
+            this.stepId       = step.DeveloperName;
             this.stepLabel    = step.Step_Label__c;
             this.displayOrder = step.Display_Order__c != null
                 ? Integer.valueOf(step.Display_Order__c) : 0;

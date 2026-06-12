@@ -7,6 +7,14 @@
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__RecordPage">
+            <property
+                name="renderingStyle"
+                type="String"
+                label="Rendering Style"
+                description="Choose how process steps are displayed on the record page."
+                datasource="Chevron,Buttons"
+                default="Chevron"
+            />
             <supportedFormFactors>
                 <supportedFormFactor type="Large"/>
                 <supportedFormFactor type="Small"/>
