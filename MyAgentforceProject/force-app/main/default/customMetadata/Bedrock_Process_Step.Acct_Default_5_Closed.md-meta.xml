@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <label>Opportunity - Approval</label>
+    <label>Default 5 Closed</label>
     <protected>false</protected>
     <values>
         <field>Object_API_Name__c</field>
-        <value xsi:type="xsd:string">Opportunity</value>
+        <value xsi:type="xsd:string">Account</value>
+    </values>
+    <values>
+        <field>Display_Order__c</field>
+        <value xsi:type="xsd:double">50</value>
+    </values>
+    <values>
+        <field>Action_Type__c</field>
+        <value xsi:type="xsd:string">Open Modal</value>
+    </values>
+    <values>
+        <field>Description__c</field>
+        <value xsi:type="xsd:string">Account relationship has ended. Document close reasons, archive relevant data, and flag for win-back campaigns if appropriate. Ensure all outstanding obligations are fulfilled before closing the account.</value>
+    </values>
+    <values>
+        <field>Active__c</field>
+        <value xsi:type="xsd:boolean">true</value>
     </values>
     <values>
         <field>Region__c</field>
@@ -23,23 +39,7 @@
         <value xsi:nil="true"/>
     </values>
     <values>
-        <field>Display_Order__c</field>
-        <value xsi:type="xsd:double">4</value>
-    </values>
-    <values>
-        <field>Action_Type__c</field>
-        <value xsi:type="xsd:string">Open Modal</value>
-    </values>
-    <values>
         <field>Action_Target__c</field>
         <value xsi:nil="true"/>
-    </values>
-    <values>
-        <field>Description__c</field>
-        <value xsi:type="xsd:string">Obtain internal approvals for discounts, exceptions, or contract terms before finalising the deal.</value>
-    </values>
-    <values>
-        <field>Active__c</field>
-        <value xsi:type="xsd:boolean">false</value>
     </values>
 </CustomMetadata>

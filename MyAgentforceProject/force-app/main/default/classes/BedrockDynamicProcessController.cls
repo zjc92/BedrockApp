@@ -13,7 +13,6 @@
  */
 public with sharing class BedrockDynamicProcessController {
 
-    private static final String STEP_LABEL_FIELD          = 'Step_Label__c';
     private static final String DISPLAY_ORDER_FIELD       = 'Display_Order__c';
     private static final String ACTION_TYPE_FIELD         = 'Action_Type__c';
     private static final String DESCRIPTION_FIELD         = 'Description__c';
@@ -36,7 +35,8 @@ public with sharing class BedrockDynamicProcessController {
     public static List<ProcessStepDTO> getActiveProcessSteps(
         String objectApiName,
         String currentRegion,
-        Decimal currentAmount
+        Decimal currentAmount,
+        String currentRating
     ) {
         if (String.isBlank(objectApiName)) {
             return new List<ProcessStepDTO>();
@@ -47,7 +47,7 @@ public with sharing class BedrockDynamicProcessController {
                 Bedrock_Process_Step__mdt.getAll().values();
 
             List<Bedrock_Process_Step__mdt> matched =
-                filterAndSort(allSteps, objectApiName, currentRegion, currentAmount);
+                filterAndSort(allSteps, objectApiName, currentRegion, currentAmount, currentRating);
 
             if (matched.isEmpty()) {
                 return new List<ProcessStepDTO>();
@@ -63,7 +63,7 @@ public with sharing class BedrockDynamicProcessController {
             List<Bedrock_Process_Step__mdt> queried = [
                 SELECT Id,
                        DeveloperName,
-                       Step_Label__c,
+                       Label,
                        Display_Order__c,
                        Action_Type__c,
                        Action_Target__c,
@@ -102,7 +102,8 @@ public with sharing class BedrockDynamicProcessController {
         List<Bedrock_Process_Step__mdt> allSteps,
         String objectApiName,
         String currentRegion,
-        Decimal currentAmount
+        Decimal currentAmount,
+        String currentRating
     ) {
         List<Bedrock_Process_Step__mdt> matched =
             new List<Bedrock_Process_Step__mdt>();
@@ -118,6 +119,9 @@ public with sharing class BedrockDynamicProcessController {
                 continue;
             }
             if (!amountMatches(step, currentAmount)) {
+                continue;
+            }
+            if (!ratingMatches(step, currentRating)) {
                 continue;
             }
             matched.add(step);
@@ -159,6 +163,16 @@ public with sharing class BedrockDynamicProcessController {
         return true;
     }
 
+    private static Boolean ratingMatches(
+        Bedrock_Process_Step__mdt step,
+        String currentRating
+    ) {
+        if (String.isBlank(step.Customer_Rating__c)) {
+            return true;
+        }
+        return step.Customer_Rating__c == currentRating;
+    }
+
     // -------------------------------------------------------------------------
     // Comparator
     // -------------------------------------------------------------------------
@@ -194,7 +208,7 @@ public with sharing class BedrockDynamicProcessController {
 
         public ProcessStepDTO(Bedrock_Process_Step__mdt step) {
             this.stepId       = step.DeveloperName;
-            this.stepLabel    = step.Step_Label__c;
+            this.stepLabel    = step.Label;
             this.displayOrder = step.Display_Order__c != null
                 ? Integer.valueOf(step.Display_Order__c) : 0;
             this.actionType   = step.Action_Type__c;

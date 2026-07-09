@@ -80,7 +80,9 @@
                     <p>{selectedStep.description}</p>
                 </div>
                 <footer class="slds-modal__footer">
-                    <lightning-button variant="brand" label={selectedStep.actionType} onclick={handleActionButton}></lightning-button>
+                    <template lwc:if={hasModalAction}>
+                        <lightning-button variant="brand" label={selectedStep.actionType} onclick={handleActionButton}></lightning-button>
+                    </template>
                     <lightning-button variant="neutral" label="Close" onclick={closeModal}></lightning-button>
                 </footer>
             </div>

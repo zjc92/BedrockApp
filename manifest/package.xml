@@ -44,12 +44,5 @@
         <members>Bedrock Service Team</members>
         <name>Profile</name>
     </types>
-    <types>
-        <members>Bedrock_Process_Step.Opp_Step_1_Discovery_Intake</members>
-        <members>Bedrock_Process_Step.Opp_Step_2_Regional_Scoping</members>
-        <members>Bedrock_Process_Step.Opp_Step_3_Management_Deal_Gate</members>
-        <members>Bedrock_Process_Step.Opp_Step_4_Executive_Legal_Board</members>
-        <name>CustomMetadata</name>
-    </types>
     <version>61.0</version>
 </Package>

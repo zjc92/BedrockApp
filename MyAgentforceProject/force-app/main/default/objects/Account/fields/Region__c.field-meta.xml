@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Region__c</fullName>
+    <label>Region</label>
+    <description>Derives the account's sales region from the SDO_Sales_Region__c field for use in the Bedrock Dynamic Process Framework step-matching logic.</description>
+    <inlineHelpText>Automatically populated from the SDO Sales Region field. Used to route the account to the correct process step configuration.</inlineHelpText>
+    <type>Text</type>
+    <formula><![CDATA[TEXT(SDO_Sales_Region__c)]]></formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+    <externalId>false</externalId>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

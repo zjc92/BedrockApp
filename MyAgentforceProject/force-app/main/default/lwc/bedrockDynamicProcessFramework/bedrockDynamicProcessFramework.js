@@ -26,17 +26,31 @@ export default class BedrockDynamicProcessFramework extends NavigationMixin(Ligh
     // Dynamic field resolution
     // -------------------------------------------------------------------------
 
+    // Account uses SDO_Sales_Region__c directly; other objects use Region__c.
     get regionField() {
-        return this.objectApiName ? `${this.objectApiName}.Region__c` : null;
+        if (!this.objectApiName) return null;
+        return this.objectApiName === 'Account'
+            ? 'Account.SDO_Sales_Region__c'
+            : `${this.objectApiName}.Region__c`;
     }
 
+    // Only Opportunity has a standard Amount field; omit for other objects
+    // to prevent getRecord from erroring on a missing field.
     get amountField() {
-        return this.objectApiName ? `${this.objectApiName}.Amount` : null;
+        const objectsWithAmount = ['Opportunity'];
+        return (this.objectApiName && objectsWithAmount.includes(this.objectApiName))
+            ? `${this.objectApiName}.Amount`
+            : null;
+    }
+
+    get ratingField() {
+        if (!this.objectApiName) return null;
+        return `${this.objectApiName}.Customer_Rating__c`;
     }
 
     get _recordFields() {
         if (!this.objectApiName || !this.recordId) return [];
-        return [this.regionField, this.amountField];
+        return [this.regionField, this.amountField, this.ratingField].filter(f => f !== null);
     }
 
     // -------------------------------------------------------------------------
@@ -45,15 +59,18 @@ export default class BedrockDynamicProcessFramework extends NavigationMixin(Ligh
 
     @track _currentRegion;
     @track _currentAmount;
+    @track _currentRating;
 
     @wire(getRecord, { recordId: '$recordId', fields: '$_recordFields' })
     wiredRecord({ error, data }) {
         if (data) {
             this._currentRegion = getFieldValue(data, this.regionField) ?? null;
             this._currentAmount = getFieldValue(data, this.amountField) ?? null;
+            this._currentRating = getFieldValue(data, this.ratingField) ?? null;
         } else if (error) {
             this._currentRegion = null;
             this._currentAmount = null;
+            this._currentRating = null;
         }
     }
 
@@ -64,7 +81,8 @@ export default class BedrockDynamicProcessFramework extends NavigationMixin(Ligh
     @wire(getActiveProcessSteps, {
         objectApiName: '$objectApiName',
         currentRegion: '$_currentRegion',
-        currentAmount: '$_currentAmount'
+        currentAmount: '$_currentAmount',
+        currentRating: '$_currentRating'
     })
     wiredSteps({ error, data }) {
         if (data) {
@@ -164,6 +182,9 @@ export default class BedrockDynamicProcessFramework extends NavigationMixin(Ligh
     get hasSteps()   { return !this.hasError && this.processSteps.length > 0; }
     get isEmpty()    { return !this.hasError && this.processSteps.length === 0; }
     get hasError()   { return !!this.errorMessage; }
+    get hasModalAction() {
+        return this.selectedStep && this.selectedStep.actionType !== 'Open Modal';
+    }
 
     get emptyMessage() {
         return `No active process configuration found for: ${this.objectApiName ?? 'unknown'}`;
