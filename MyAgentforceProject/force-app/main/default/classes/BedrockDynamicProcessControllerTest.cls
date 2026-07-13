@@ -17,7 +17,7 @@ private class BedrockDynamicProcessControllerTest {
         // Given / When
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
-            BedrockDynamicProcessController.getActiveProcessSteps(null, 'East', 50000);
+            BedrockDynamicProcessController.getActiveProcessSteps(null, 'East', 50000, null);
         Test.stopTest();
 
         // Then — must never throw; must return a zero-size initialized list
@@ -31,7 +31,7 @@ private class BedrockDynamicProcessControllerTest {
         // Given / When
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
-            BedrockDynamicProcessController.getActiveProcessSteps('   ', 'East', 50000);
+            BedrockDynamicProcessController.getActiveProcessSteps('   ', 'East', 50000, null);
         Test.stopTest();
 
         // Then
@@ -45,7 +45,7 @@ private class BedrockDynamicProcessControllerTest {
         // Given / When
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
-            BedrockDynamicProcessController.getActiveProcessSteps('', 'East', 50000);
+            BedrockDynamicProcessController.getActiveProcessSteps('', 'East', 50000, null);
         Test.stopTest();
 
         // Then
@@ -64,7 +64,7 @@ private class BedrockDynamicProcessControllerTest {
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
             BedrockDynamicProcessController.getActiveProcessSteps(
-                'Bedrock__Unknown__XYZ', 'East', 10000
+                'Bedrock__Unknown__XYZ', 'East', 10000, null
             );
         Test.stopTest();
 
@@ -84,7 +84,7 @@ private class BedrockDynamicProcessControllerTest {
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
             BedrockDynamicProcessController.getActiveProcessSteps(
-                'Opportunity', null, null
+                'Opportunity', null, null, null
             );
         Test.stopTest();
 
@@ -98,7 +98,7 @@ private class BedrockDynamicProcessControllerTest {
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
             BedrockDynamicProcessController.getActiveProcessSteps(
-                'Opportunity', null, null
+                'Opportunity', null, null, null
             );
         Test.stopTest();
 
@@ -122,7 +122,7 @@ private class BedrockDynamicProcessControllerTest {
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
             BedrockDynamicProcessController.getActiveProcessSteps(
-                'Opportunity', null, null
+                'Opportunity', null, null, null
             );
         Test.stopTest();
 
@@ -149,7 +149,7 @@ private class BedrockDynamicProcessControllerTest {
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
             BedrockDynamicProcessController.getActiveProcessSteps(
-                'Opportunity', region, amount
+                'Opportunity', region, amount, null
             );
         Test.stopTest();
 
@@ -168,7 +168,7 @@ private class BedrockDynamicProcessControllerTest {
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
             BedrockDynamicProcessController.getActiveProcessSteps(
-                'Opportunity', region, amount
+                'Opportunity', region, amount, null
             );
         Test.stopTest();
 
@@ -192,7 +192,7 @@ private class BedrockDynamicProcessControllerTest {
         Test.startTest();
         List<BedrockDynamicProcessController.ProcessStepDTO> results =
             BedrockDynamicProcessController.getActiveProcessSteps(
-                'Opportunity', null, null
+                'Opportunity', null, null, null
             );
         Test.stopTest();
 
